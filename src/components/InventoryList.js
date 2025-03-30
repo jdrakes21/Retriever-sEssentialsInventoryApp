@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
+const LOW_STOCK_THRESHOLD = 10;
+
 function InventoryList() {
   const [items, setItems] = useState([]);
   const [updatedQuantities, setUpdatedQuantities] = useState({});
 
-  // Fetch inventory items on component mount
   useEffect(() => {
     fetchInventory();
   }, []);
 
-  // GET Request to fetch all inventory items
   const fetchInventory = async () => {
     try {
       const response = await axios.get('http://localhost:5000/inventory');
@@ -20,18 +20,16 @@ function InventoryList() {
     }
   };
 
-  // DELETE Request to delete an item
   const deleteItem = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/inventory/delete/${id}`);
       alert("Item Deleted!");
-      fetchInventory(); // Refresh the list
+      fetchInventory();
     } catch (err) {
       console.error("Error deleting item:", err.message);
     }
   };
 
-  // Handle input change for updated quantity
   const handleQuantityChange = (id, value) => {
     setUpdatedQuantities({
       ...updatedQuantities,
@@ -39,28 +37,30 @@ function InventoryList() {
     });
   };
 
-  // PUT Request to update quantity
   const updateQuantity = async (id) => {
     try {
       if (!updatedQuantities[id]) {
         alert("Please enter a new quantity first!");
         return;
       }
+
       await axios.put(`http://localhost:5000/inventory/update/${id}`, {
         stock_quantity: updatedQuantities[id]
       });
       alert("Quantity Updated!");
-      fetchInventory(); // Refresh the list
+      fetchInventory();
     } catch (err) {
       console.error("Error updating quantity:", err.message);
     }
   };
 
   return (
-    <div>
-      <h2>Inventory Items</h2>
-      <table border="1" cellPadding="10">
-        <thead>
+    <div className="container mt-4">
+      <h2 className="text-dark border-bottom pb-2 mb-4">📦 Inventory Items</h2>
+
+      {/* Main Inventory Table */}
+      <table className="table table-striped table-bordered">
+        <thead className="table-dark">
           <tr>
             <th>Item Name</th>
             <th>Quantity</th>
@@ -73,24 +73,55 @@ function InventoryList() {
           {items.map(item => (
             <tr key={item.item_id}>
               <td>{item.item_name}</td>
-              <td>
+              <td className={item.stock_quantity < LOW_STOCK_THRESHOLD ? 'low-stock' : ''}>
                 {item.stock_quantity}
+                {item.stock_quantity < LOW_STOCK_THRESHOLD && <span> ⚠️ Low Stock</span>}
                 <br />
                 <input
                   type="number"
+                  className="form-control form-control-sm mt-1"
                   placeholder="New Qty"
                   value={updatedQuantities[item.item_id] || ''}
                   onChange={(e) => handleQuantityChange(item.item_id, e.target.value)}
                 />
-                <button onClick={() => updateQuantity(item.item_id)}>Update</button>
+                <button className="umbc-btn mt-1" onClick={() => updateQuantity(item.item_id)}>
+                  Update
+                </button>
               </td>
               <td>{item.category}</td>
               <td>{item.supplier}</td>
               <td>
-                <button onClick={() => deleteItem(item.item_id)}>Delete</button>
+                <button className="umbc-btn" onClick={() => deleteItem(item.item_id)}>
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
+        </tbody>
+      </table>
+
+      {/* Low Stock Items */}
+      <h3 className="text-dark mt-5">⚠️ Low Stock Items</h3>
+      <table className="table table-bordered">
+        <thead className="table-warning text-dark">
+          <tr>
+            <th>Item Name</th>
+            <th>Quantity</th>
+            <th>Category</th>
+            <th>Supplier</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items
+            .filter(item => item.stock_quantity < LOW_STOCK_THRESHOLD)
+            .map(item => (
+              <tr key={item.item_id}>
+                <td>{item.item_name}</td>
+                <td className="low-stock">{item.stock_quantity}</td>
+                <td>{item.category}</td>
+                <td>{item.supplier}</td>
+              </tr>
+            ))}
         </tbody>
       </table>
     </div>
@@ -98,4 +129,3 @@ function InventoryList() {
 }
 
 export default InventoryList;
-
