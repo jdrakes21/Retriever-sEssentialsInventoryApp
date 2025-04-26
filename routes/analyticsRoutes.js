@@ -21,4 +21,42 @@ router.get('/popular-items', async (req, res) => {
   }
 });
 
+router.get('/student-trends', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    let query = `
+      SELECT
+        DATE_TRUNC('hour', transaction_date) AS withdrawal_hour,
+        COUNT(*) AS withdrawal_count
+      FROM withdrawals
+    `;
+
+    const conditions = [];
+    const values = [];
+
+    if (startDate) {
+      conditions.push(`transaction_date >= $${values.length + 1}`);
+      values.push(startDate);
+    }
+    if (endDate) {
+      conditions.push(`transaction_date <= $${values.length + 1}`);
+      values.push(endDate);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' GROUP BY withdrawal_hour ORDER BY withdrawal_hour;';
+
+    const trends = await pool.query(query, values);
+
+    res.json(trends.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
