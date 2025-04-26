@@ -5,6 +5,7 @@ import InventoryList from './components/InventoryList';
 import InventoryReport from './components/InventoryReport';
 
 import PopularItems from './components/PopularItems'; //  Import it
+import StudentTrends from './components/StudentTrends';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <InventoryList />
         <InventoryReport />
         <PopularItems /> {/*  Show Popular Items Table */}
+        <StudentTrends />
       </div>
 
       <footer className="footer">
