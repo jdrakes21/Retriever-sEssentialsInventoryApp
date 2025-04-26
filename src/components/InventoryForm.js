@@ -30,12 +30,51 @@ function InventoryForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input name="item_name" placeholder="Item Name" onChange={handleChange} value={formData.item_name} required />
-      <input name="stock_quantity" placeholder="Quantity" type="number" onChange={handleChange} value={formData.stock_quantity} required />
-      <input name="category" placeholder="Category" onChange={handleChange} value={formData.category} />
-      <input name="supplier" placeholder="Supplier" onChange={handleChange} value={formData.supplier} />
-      <button type="submit">Add Item</button>
+    <form onSubmit={handleSubmit} className="mb-4">
+      <input
+        name="item_name"
+        className="form-control mb-2"
+        placeholder="Item Name"
+        onChange={handleChange}
+        value={formData.item_name}
+        required
+      />
+
+      <input
+        name="stock_quantity"
+        className="form-control mb-2"
+        placeholder="Quantity"
+        type="number"
+        onChange={handleChange}
+        value={formData.stock_quantity}
+        required
+      />
+
+      {/* ✅ Dropdown for Category */}
+      <select
+        name="category"
+        className="form-control mb-2"
+        value={formData.category}
+        onChange={handleChange}
+        required
+      >
+        <option value="">-- Select Category --</option>
+        <option value="Essentials">Essentials</option>
+        <option value="Snacks">Snacks</option>
+        <option value="Beverages">Beverages</option>
+        <option value="Toiletries">Toiletries</option>
+        <option value="Frozen">Frozen</option>
+      </select>
+
+      <input
+        name="supplier"
+        className="form-control mb-2"
+        placeholder="Supplier"
+        onChange={handleChange}
+        value={formData.supplier}
+      />
+
+      <button className="umbc-btn" type="submit">Add Item</button>
     </form>
   );
 }
