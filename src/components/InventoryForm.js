@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-function InventoryForm() {
+const InventoryForm = React.memo(({ addItemToList }) => {  // Use memoization for better performance
   const [formData, setFormData] = useState({
     item_name: '',
     stock_quantity: '',
@@ -15,9 +15,21 @@ function InventoryForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isNaN(formData.stock_quantity) || formData.stock_quantity <= 0) {
+      alert("Please enter a valid stock quantity.");
+      return;
+    }
+
     try {
-      await axios.post('http://localhost:5000/inventory/add', formData);
+      // Send form data to the backend to add the new item
+      const response = await axios.post('http://localhost:5000/inventory/add', formData);
       alert('Item Added Successfully!');
+
+      // Add the new item to the inventory list without re-fetching
+      addItemToList(response.data);  // Pass the new item to the parent component
+
+      // Reset the form fields after submission
       setFormData({
         item_name: '',
         stock_quantity: '',
@@ -25,9 +37,13 @@ function InventoryForm() {
         supplier: ''
       });
     } catch (err) {
-      console.error(err.message);
+      console.error('Error while adding item:', err);
+      alert('Error adding item');
     }
   };
+
+  // Check if form is valid
+  const isFormValid = formData.item_name && formData.stock_quantity && formData.category && formData.supplier && !isNaN(formData.stock_quantity) && formData.stock_quantity > 0;
 
   return (
     <form onSubmit={handleSubmit} className="mb-4">
@@ -39,7 +55,6 @@ function InventoryForm() {
         value={formData.item_name}
         required
       />
-
       <input
         name="stock_quantity"
         className="form-control mb-2"
@@ -49,8 +64,6 @@ function InventoryForm() {
         value={formData.stock_quantity}
         required
       />
-
-      {/* ✅ Dropdown for Category */}
       <select
         name="category"
         className="form-control mb-2"
@@ -65,18 +78,19 @@ function InventoryForm() {
         <option value="Toiletries">Toiletries</option>
         <option value="Frozen">Frozen</option>
       </select>
-
       <input
         name="supplier"
         className="form-control mb-2"
         placeholder="Supplier"
         onChange={handleChange}
         value={formData.supplier}
+        required
       />
-
-      <button className="umbc-btn" type="submit">Add Item</button>
+      <button className="umbc-btn" type="submit" disabled={!isFormValid}>Add Item</button>
     </form>
   );
-}
+});
 
 export default InventoryForm;
+
+

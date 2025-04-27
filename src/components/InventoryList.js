@@ -7,10 +7,7 @@ function InventoryList() {
   const [items, setItems] = useState([]);
   const [updatedQuantities, setUpdatedQuantities] = useState({});
 
-  useEffect(() => {
-    fetchInventory();
-  }, []);
-
+  // Fetch inventory data from the backend
   const fetchInventory = async () => {
     try {
       const response = await axios.get('http://localhost:5000/inventory');
@@ -19,6 +16,15 @@ function InventoryList() {
       console.error("Error fetching inventory:", err.message);
     }
   };
+
+  // Set up polling to fetch inventory every 5 seconds
+  useEffect(() => {
+    fetchInventory(); // Fetch inventory immediately on load
+
+    const interval = setInterval(fetchInventory, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval); // Cleanup interval on unmount
+  }, []);
 
   const deleteItem = async (id) => {
     try {

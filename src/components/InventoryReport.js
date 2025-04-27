@@ -18,7 +18,7 @@ function InventoryReport() {
 
   const fetchInventory = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/inventory');
+      const response = await axios.get('http://localhost:5001/inventory');
       const filtered = response.data.filter(item => {
         const addedDate = new Date(item.added_on);
         const start = startDate ? new Date(startDate) : null;
