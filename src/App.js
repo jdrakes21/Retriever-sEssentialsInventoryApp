@@ -1,10 +1,12 @@
+
 import React, { useState } from 'react';
 import './App.css';
 import InventoryForm from './components/InventoryForm';
 import InventoryList from './components/InventoryList';
 import InventoryReport from './components/InventoryReport';
 import WithdrawalForm from './components/WithdrawalForm';
-import AdminDashboard from './components/AdminDashboard'; 
+import AdminDashboard from './components/AdminDashboard'; // Admin Dashboard to show trends
+import axios from 'axios';  // Import axios
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -20,6 +22,17 @@ function App() {
     } else if (credentials.username === 'student' && credentials.password === 'studentpass') {
       setIsLoggedIn(true);
       setRole('student');
+
+      // Send the visit tracking data to the backend
+      const userId = 'student18691'; // Get this dynamically from login
+      const itemId = 36; // Replace this with the selected item id, or set as needed
+      axios.post('http://localhost:5000/student-visits/track', { user_id: userId, item_id: itemId })
+        .then((response) => {
+          console.log('Visit logged:', response.data);
+        })
+        .catch((error) => {
+          console.error('Error logging visit:', error);
+        });
     } else {
       alert("Invalid credentials");
     }
@@ -71,16 +84,16 @@ function App() {
               <>
                 {/* Admin Features */}
                 <InventoryForm />
-                <InventoryList />
+                <InventoryList role={role} /> {/* Pass role to InventoryList */}
                 <InventoryReport />
-                <AdminDashboard /> {/* Admin Dashboard to show popular items */}
+                <AdminDashboard role={role} /> {/* Pass role to AdminDashboard */}
                 <button className="umbc-btn" onClick={handleLogout}>Log Out</button>
               </>
             ) : (
               <>
                 {/* Student Features */}
                 <h3>Welcome Student! 🐾</h3>
-                <WithdrawalForm /> {/* Render WithdrawalForm for students */}
+                <WithdrawalForm role={role} /> {/* Pass role to WithdrawalForm */}
                 <button className="umbc-btn" onClick={handleLogout}>Log Out</button>
               </>
             )}
@@ -96,4 +109,3 @@ function App() {
 }
 
 export default App;
-

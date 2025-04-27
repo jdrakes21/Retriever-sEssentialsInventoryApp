@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import '../App.css';  // Correct the path to point to the correct directory
-
+import '../App.css';
 
 function WithdrawalForm() {
   const [items, setItems] = useState([]);
@@ -10,7 +9,7 @@ function WithdrawalForm() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Fetch available items from the correct backend URL
+    // Fetch available items from the backend
     const fetchItems = async () => {
       try {
         const response = await axios.get('http://localhost:5000/inventory'); // Correct port (5000)
@@ -29,16 +28,32 @@ function WithdrawalForm() {
       setError('Please select an item and specify a quantity.');
       return;
     }
-  
-    const userId = 'student18691'; // Assuming this is dynamically assigned after login
-  
+
+    // Find the selected item by item_id
+    const item = items.find(i => i.item_id === parseInt(selectedItem));
+
+    if (!item) {
+      setError('Item not found!');
+      return;
+    }
+
+    const userId = 'student18691'; // This should come from the logged-in user's session
+
+    // Check if the quantity exceeds available stock
+    if (item.stock_quantity < quantity) {
+      setError('Insufficient inventory for withdrawal!');
+      return;
+    }
+
     try {
-      // Send the selected item_id instead of item_name
+      // Send the item_id and quantity in the POST request
       await axios.post('http://localhost:5000/withdrawals', {
         user_id: userId,
-        item_id: selectedItem, // Send item_id here
+        item_id: item.item_id, // Send the item_id here
         quantity: parseInt(quantity),
       });
+
+      // After successful withdrawal, refetch the inventory
       alert('Withdrawal successful!');
       setSelectedItem('');
       setQuantity('');
@@ -48,8 +63,6 @@ function WithdrawalForm() {
       console.error(err.message);
     }
   };
-  
-  
 
   return (
     <div className="withdrawal-form-container">
@@ -58,19 +71,19 @@ function WithdrawalForm() {
         <div className="form-group">
           <label htmlFor="item-name">Item Name</label>
           <select
-  id="item-name"
-  className="form-control"
-  value={selectedItem}
-  onChange={(e) => setSelectedItem(e.target.value)} 
-  required
->
-  <option value="">-- Select Item --</option>
-  {items.map((item) => (
-    <option key={item.item_id} value={item.item_id}> {/* Change to item_id */}
-      {item.item_name}
-    </option>
-  ))}
-</select>
+            id="item-name"
+            className="form-control"
+            value={selectedItem}
+            onChange={(e) => setSelectedItem(e.target.value)} 
+            required
+          >
+            <option value="">-- Select Item --</option>
+            {items.map((item) => (
+              <option key={item.item_id} value={item.item_id}> {/* Use item_id here */}
+                {item.item_name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group">
