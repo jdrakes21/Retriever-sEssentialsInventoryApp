@@ -16,18 +16,36 @@ router.get('/', async (req, res) => {
   }
 });
 
-
-// POST - Add a new inventory item
+// POST - Add or update an inventory item
 router.post('/add', async (req, res) => {
   const { item_name, stock_quantity, category, supplier } = req.body;
 
   try {
+    // Check if the item with the same name and supplier already exists (case-insensitive)
+    const existingItem = await pool.query(
+      `SELECT * FROM inventory WHERE item_name ILIKE $1 AND supplier ILIKE $2`,
+      [item_name, supplier]
+    );
+
+    if (existingItem.rows.length > 0) {
+      // If the item exists with the same supplier, update the stock quantity
+      const updatedItem = await pool.query(
+        `UPDATE inventory
+         SET stock_quantity = stock_quantity + $1
+         WHERE item_id = $2
+         RETURNING *`,
+        [stock_quantity, existingItem.rows[0].item_id]
+      );
+      return res.json({ message: 'Item quantity updated', item: updatedItem.rows[0] });
+    }
+
+    // If the item does not exist, create a new item
     const newItem = await pool.query(
       `INSERT INTO inventory (item_name, stock_quantity, category, supplier) 
        VALUES ($1, $2, $3, $4) RETURNING *`,
       [item_name, stock_quantity, category, supplier]
     );
-    res.json(newItem.rows[0]);
+    res.json({ message: 'Item added successfully', item: newItem.rows[0] });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: err.message });
@@ -73,19 +91,5 @@ router.delete('/delete/:id', async (req, res) => {
   }
 });
 
-
 // ==================== EXPORT ROUTER ==================== //
 module.exports = router;
-
-
-/*
-const express = require('express');
-const router = express.Router();
-
-// Simple test route
-router.get('/', (req, res) => {
-  res.send('Inventory route basic test working!');
-});
-
-module.exports = router;
-*/
