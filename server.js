@@ -4,6 +4,12 @@ require('dotenv').config();
 
 const app = express();
 
+
+app.use((req, res, next) => {
+  res.setHeader("Cache-Control", "no-store"); // Disable caching
+  next(); // Proceed to the next middleware or route handler
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -13,12 +19,16 @@ app.get('/', (req, res) => {
   res.send('Backend server is working!');
 });
 
+
+
 // Import Route Files
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const withdrawalRoutes = require('./routes/withdrawalRoutes');
 // Import routes for admin
 const adminRoutes = require('./routes/adminRoutes'); 
 app.use('/admin', adminRoutes);  // Register the routes under the '/admin' path
+const studentVisitRoutes = require('./routes/studentVisitRoutes');
+app.use('/student-visits', studentVisitRoutes);
 
 // Use Routes
 app.use('/inventory', inventoryRoutes);

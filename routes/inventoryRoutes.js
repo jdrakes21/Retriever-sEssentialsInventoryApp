@@ -16,6 +16,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET all available inventory items for Student (stock > 0)
+router.get('/available', async (req, res) => {
+  try {
+    const availableItems = await pool.query(
+      "SELECT * FROM inventory WHERE stock_quantity > 0 ORDER BY item_id ASC"
+    );
+    res.json(availableItems.rows);  // Only items with stock > 0 for student
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // POST - Add or update an inventory item
 router.post('/add', async (req, res) => {
   const { item_name, stock_quantity, category, supplier } = req.body;
@@ -71,6 +85,7 @@ router.put('/update/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // DELETE - Delete inventory item
 router.delete('/delete/:id', async (req, res) => {
