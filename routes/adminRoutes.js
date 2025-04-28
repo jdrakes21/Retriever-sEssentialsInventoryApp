@@ -19,6 +19,24 @@ router.get('/item_popularity', async (req, res) => {
   }
 });
 
+router.get('/inventory-turnover', async (req, res) => {
+  try {
+    // Example query for COGS (you will need to adjust to your actual database setup)
+    const cogs = await pool.query('SELECT SUM(cogs) FROM sales'); // Adjust to pull from your database
+
+    // Query to get the average inventory during the period
+    const avgInventory = await pool.query('SELECT AVG(stock_quantity) FROM inventory');
+
+    // Assuming we have COGS and average inventory values
+    const turnoverRate = cogs.rows[0].sum / avgInventory.rows[0].avg;
+
+    res.json({ turnoverRate });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET - Retrieve student visits based on visits (from student_visits table)
 router.get('/student-visits', async (req, res) => {
   try {
