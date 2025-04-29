@@ -7,22 +7,36 @@ function AdminDashboard() {
   const [peakDays, setPeakDays] = useState([]); // Start with an empty array
   const [loading, setLoading] = useState(true); // Loading state to show loading indicator
 
-  useEffect(() => {
-    // Fetch most popular items from the backend
-    const fetchPopularItems = async () => {
-      try {
-        const response = await axios.get(`http://localhost:5000/admin/item_popularity?timestamp=${new Date().getTime()}`);
-        setPopularItems(response.data);
-      } catch (err) {
-        console.error('Error fetching popular items:', err.message);
-      }
-    };
+  // Function to update or add a popular item based on withdrawal count
+  const updateItemPopularity = async (item_name, withdrawal_count) => {
+    try {
+      const response = await axios.post('http://localhost:5000/admin/update_popularity', {
+        item_name: item_name,
+        withdrawal_count: withdrawal_count
+      });
+      console.log(response.data.message);
+      fetchPopularItems(); // Fetch the updated popular items
+    } catch (err) {
+      console.error('Error updating item popularity:', err.message);
+    }
+  };
 
+  // Fetch most popular items from the backend
+  const fetchPopularItems = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/admin/item_popularity?timestamp=${new Date().getTime()}`);
+      setPopularItems(response.data);
+    } catch (err) {
+      console.error('Error fetching popular items:', err.message);
+    }
+  };
+
+  useEffect(() => {
     // Fetch peak hours data from the backend
     const fetchPeakHours = async () => {
       try {
         const response = await axios.get(`http://localhost:5000/admin/peak-hours?timestamp=${new Date().getTime()}`);
-    setPeakHours(response.data);
+        setPeakHours(response.data);
       } catch (err) {
         console.error('Error fetching peak hours data:', err.message);
       }
@@ -32,19 +46,20 @@ function AdminDashboard() {
     const fetchPeakDays = async () => {
       try {
         const response = await axios.get(`http://localhost:5000/admin/peak-days?timestamp=${new Date().getTime()}`);
-    setPeakDays(response.data);
         setPeakDays(response.data);
       } catch (err) {
         console.error('Error fetching peak days data:', err.message);
       }
     };
 
-    fetchPopularItems();
-    fetchPeakHours();
-    fetchPeakDays();
+    // Wait for all fetch requests to complete
+    Promise.all([fetchPopularItems(), fetchPeakHours(), fetchPeakDays()])
+      .then(() => setLoading(false))
+      .catch(err => {
+        console.error('Error fetching data:', err.message);
+        setLoading(false); // Even if an error occurs, set loading to false
+      });
 
-    // After all data has been fetched, set loading to false
-    setLoading(false);
   }, []); // Empty dependency array means this will run once on page load
 
   if (loading) {
@@ -125,6 +140,17 @@ function AdminDashboard() {
         </table>
       )}
 
+      {/* Example of updating item popularity when a withdrawal occurs */}
+      <div className="example-update">
+        <h5>Update Item Popularity Example</h5>
+        <button
+          className="umbc-btn"
+          onClick={() => updateItemPopularity('Bananas', 5)}
+        >
+          Add 5 Withdrawals for Bananas
+        </button>
+      </div>
+
       {/* Export Buttons */}
       <div className="download-buttons mt-4">
         <button
@@ -160,4 +186,3 @@ function AdminDashboard() {
 }
 
 export default AdminDashboard;
-

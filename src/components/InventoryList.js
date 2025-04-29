@@ -56,11 +56,12 @@ function InventoryList({ role }) {
 
   const deleteItem = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/inventory/delete/${id}`);
-      alert("Item Deleted!");
-      fetchInventory();
+      const response = await axios.delete(`http://localhost:5000/inventory/delete/${id}`);
+      alert(response.data.message);  // Alert with the returned message
+      fetchInventory();  // Re-fetch the inventory to update the list
     } catch (err) {
       console.error("Error deleting item:", err.message);
+      alert("Error deleting item. Make sure the item is fully withdrawn.");
     }
   };
 
