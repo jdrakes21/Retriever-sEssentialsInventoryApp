@@ -6,7 +6,7 @@ const exceljs = require('exceljs');
 
 // Route for CSV Export
 router.get('/export-inventory-csv', async (req, res) => {
-    console.log("Export Inventory CSV route hit");
+  //console.log("Export Inventory CSV route hit");
     try {
     const inventoryData = await pool.query('SELECT * FROM inventory');
     

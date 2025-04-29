@@ -19,6 +19,44 @@ router.get('/item_popularity', async (req, res) => {
   }
 });
 
+// POST - Add or update item popularity based on withdrawals
+router.post('/update_popularity', async (req, res) => {
+  const { item_name, withdrawal_count } = req.body;
+
+  try {
+    // Check if the item already exists in item_popularity (case-insensitive)
+    const existingItem = await pool.query(
+      `SELECT * FROM item_popularity WHERE item_name ILIKE $1`,
+      [item_name]
+    );
+
+    if (existingItem.rows.length > 0) {
+      // If the item exists, update the withdrawal count by adding the new withdrawal_count
+      const updatedItem = await pool.query(
+        `UPDATE item_popularity
+         SET withdrawal_count = withdrawal_count + $1, last_updated = NOW()
+         WHERE item_id = $2
+         RETURNING *`,
+        [withdrawal_count, existingItem.rows[0].item_id]
+      );
+      res.json({ message: 'Item popularity updated successfully', item: updatedItem.rows[0] });
+    } else {
+      // If the item doesn't exist, insert a new record into item_popularity
+      const newItem = await pool.query(
+        `INSERT INTO item_popularity (item_name, withdrawal_count, last_updated)
+         VALUES ($1, $2, NOW()) RETURNING *`,
+        [item_name, withdrawal_count]
+      );
+      res.json({ message: 'New item added to popularity list', item: newItem.rows[0] });
+    }
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 router.get('/inventory-turnover', async (req, res) => {
   try {
     // Example query for COGS (you will need to adjust to your actual database setup)
