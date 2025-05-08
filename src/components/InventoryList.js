@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const LOW_STOCK_THRESHOLD = 10;
@@ -7,19 +7,18 @@ function InventoryList({ role }) {
   const [items, setItems] = useState([]);
   const [updatedQuantities, setUpdatedQuantities] = useState({});
 
-  // Fetch inventory data from the backend
-  const fetchInventory = async () => {
+  // Use useCallback to memoize the function
+  const fetchInventory = useCallback(async () => {
     try {
       const response = await axios.get('http://localhost:5000/inventory');
-      // If the role is student, filter out items with zero stock quantity
-      const availableItems = role === 'student' 
-        ? response.data.filter(item => item.stock_quantity > 0) // Only show items with stock > 0 for students
-        : response.data;  // Admins will see all items
+      const availableItems = role === 'student'
+        ? response.data.filter(item => item.stock_quantity > 0)
+        : response.data;
       setItems(availableItems);
     } catch (err) {
       console.error("Error fetching inventory:", err.message);
     }
-  };
+  }, [role]); // Include role as a dependency
 
   // Set up polling to fetch inventory every 5 seconds
   useEffect(() => {
@@ -27,7 +26,7 @@ function InventoryList({ role }) {
     const interval = setInterval(fetchInventory, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval); // Cleanup interval on unmount
-  }, [role]); // Only re-run the fetch when role changes
+  }, [fetchInventory]); // Only re-run the fetch when role changes
 
   // Handle Withdrawal for students
   const handleWithdrawal = async (itemId, quantity) => {
@@ -173,4 +172,3 @@ function InventoryList({ role }) {
 }
 
 export default InventoryList;
-

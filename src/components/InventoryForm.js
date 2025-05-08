@@ -92,5 +92,3 @@ const InventoryForm = React.memo(({ addItemToList }) => {  // Use memoization fo
 });
 
 export default InventoryForm;
-
-

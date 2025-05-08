@@ -140,16 +140,7 @@ function AdminDashboard() {
         </table>
       )}
 
-      {/* Example of updating item popularity when a withdrawal occurs */}
-      <div className="example-update">
-        <h5>Update Item Popularity Example</h5>
-        <button
-          className="umbc-btn"
-          onClick={() => updateItemPopularity('Bananas', 5)}
-        >
-          Add 5 Withdrawals for Bananas
-        </button>
-      </div>
+    
 
       {/* Export Buttons */}
       <div className="download-buttons mt-4">
