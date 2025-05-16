@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import '../App.css';
 
 function WithdrawalForm() {
   const [items, setItems] = useState([]);
@@ -9,10 +8,9 @@ function WithdrawalForm() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Fetch available items from the backend
     const fetchItems = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/inventory'); // Correct port (5000)
+        const response = await axios.get('http://localhost:5000/inventory');
         setItems(response.data);
       } catch (err) {
         console.error('Error fetching inventory:', err.message);
@@ -29,7 +27,6 @@ function WithdrawalForm() {
       return;
     }
 
-    // Find the selected item by item_id
     const item = items.find(i => i.item_id === parseInt(selectedItem));
 
     if (!item) {
@@ -39,21 +36,18 @@ function WithdrawalForm() {
 
     const userId = 'student18691'; // This should come from the logged-in user's session
 
-    // Check if the quantity exceeds available stock
     if (item.stock_quantity < quantity) {
       setError('Insufficient inventory for withdrawal!');
       return;
     }
 
     try {
-      // Send the item_id and quantity in the POST request
       await axios.post('http://localhost:5000/withdrawals', {
         user_id: userId,
-        item_id: item.item_id, // Send the item_id here
+        item_id: item.item_id,
         quantity: parseInt(quantity),
       });
 
-      // After successful withdrawal, refetch the inventory
       alert('Withdrawal successful!');
       setSelectedItem('');
       setQuantity('');
@@ -74,15 +68,19 @@ function WithdrawalForm() {
             id="item-name"
             className="form-control"
             value={selectedItem}
-            onChange={(e) => setSelectedItem(e.target.value)} 
+            onChange={(e) => setSelectedItem(e.target.value)}
             required
           >
             <option value="">-- Select Item --</option>
-            {items.map((item) => (
-              <option key={item.item_id} value={item.item_id}> {/* Use item_id here */}
-                {item.item_name}
-              </option>
-            ))}
+            {items.map((item) => {
+              const price = parseFloat(item.price); // Convert price to a number
+              const priceFormatted = !isNaN(price) ? `$${price.toFixed(2)}` : 'N/A';
+              return (
+                <option key={item.item_id} value={item.item_id}>
+                  {item.item_name} - {priceFormatted}
+                </option>
+              );
+            })}
           </select>
         </div>
 
@@ -113,15 +111,21 @@ function WithdrawalForm() {
             <tr>
               <th>Item Name</th>
               <th>Quantity Available</th>
+              <th>Price</th> {/* Show price */}
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
-              <tr key={item.item_id}>
-                <td>{item.item_name}</td>
-                <td>{item.stock_quantity}</td>
-              </tr>
-            ))}
+            {items.map((item) => {
+              const price = parseFloat(item.price); // Convert price to a number
+              const priceFormatted = !isNaN(price) ? `$${price.toFixed(2)}` : 'Price not available';
+              return (
+                <tr key={item.item_id}>
+                  <td>{item.item_name}</td>
+                  <td>{item.stock_quantity}</td>
+                  <td>{priceFormatted}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

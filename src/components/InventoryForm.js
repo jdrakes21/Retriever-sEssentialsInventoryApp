@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const InventoryForm = React.memo(({ addItemToList }) => {  // Use memoization for better performance
+const InventoryForm = React.memo(({ addItemToList }) => {
   const [formData, setFormData] = useState({
     item_name: '',
     stock_quantity: '',
     category: '',
-    supplier: ''
+    supplier: '',
+    price: '' // Price field added
   });
 
   const handleChange = (e) => {
@@ -21,20 +22,21 @@ const InventoryForm = React.memo(({ addItemToList }) => {  // Use memoization fo
       return;
     }
 
+    if (isNaN(formData.price) || formData.price <= 0) {
+      alert("Please enter a valid price.");
+      return;
+    }
+
     try {
-      // Send form data to the backend to add the new item
       const response = await axios.post('http://localhost:5000/inventory/add', formData);
       alert('Item Added Successfully!');
-
-      // Add the new item to the inventory list without re-fetching
-      addItemToList(response.data);  // Pass the new item to the parent component
-
-      // Reset the form fields after submission
+      addItemToList(response.data);
       setFormData({
         item_name: '',
         stock_quantity: '',
         category: '',
-        supplier: ''
+        supplier: '',
+        price: '' // Reset price field
       });
     } catch (err) {
       console.error('Error while adding item:', err);
@@ -42,8 +44,7 @@ const InventoryForm = React.memo(({ addItemToList }) => {  // Use memoization fo
     }
   };
 
-  // Check if form is valid
-  const isFormValid = formData.item_name && formData.stock_quantity && formData.category && formData.supplier && !isNaN(formData.stock_quantity) && formData.stock_quantity > 0;
+  const isFormValid = formData.item_name && formData.stock_quantity && formData.category && formData.supplier && formData.price;
 
   return (
     <form onSubmit={handleSubmit} className="mb-4">
@@ -62,6 +63,15 @@ const InventoryForm = React.memo(({ addItemToList }) => {  // Use memoization fo
         type="number"
         onChange={handleChange}
         value={formData.stock_quantity}
+        required
+      />
+      <input
+        name="price"
+        className="form-control mb-2"
+        placeholder="Price"
+        type="number"
+        onChange={handleChange}
+        value={formData.price}
         required
       />
       <select

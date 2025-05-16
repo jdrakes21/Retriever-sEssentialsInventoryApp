@@ -6,11 +6,13 @@ const LOW_STOCK_THRESHOLD = 10;
 function InventoryList({ role }) {
   const [items, setItems] = useState([]);
   const [updatedQuantities, setUpdatedQuantities] = useState({});
+  const [successMessage, setSuccessMessage] = useState('');  // Add successMessage state
 
-  // Use useCallback to memoize the function
+  // Fetch inventory data from the backend
   const fetchInventory = useCallback(async () => {
     try {
       const response = await axios.get('http://localhost:5000/inventory');
+      console.log("API Response:", response.data);
       const availableItems = role === 'student'
         ? response.data.filter(item => item.stock_quantity > 0)
         : response.data;
@@ -18,46 +20,54 @@ function InventoryList({ role }) {
     } catch (err) {
       console.error("Error fetching inventory:", err.message);
     }
-  }, [role]); // Include role as a dependency
+  }, [role]);
 
-  // Set up polling to fetch inventory every 5 seconds
   useEffect(() => {
     fetchInventory(); // Fetch inventory immediately on load
     const interval = setInterval(fetchInventory, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval); // Cleanup interval on unmount
-  }, [fetchInventory]); // Only re-run the fetch when role changes
+  }, [fetchInventory]);
 
-  // Handle Withdrawal for students
   const handleWithdrawal = async (itemId, quantity) => {
     if (role !== 'student') {
-      alert("Only students can make withdrawals!");
+      setSuccessMessage('Only students can make withdrawals!');  // Set message for invalid role
       return;
     }
 
-    try {
-      const userId = 'student18691'; // This should be dynamically set after login
+    const item = items.find(i => i.item_id === itemId);  // Ensure itemId matches
+    const totalPrice = item.price * quantity;  // Calculate the total price
 
-      // Make the withdrawal API request
-      await axios.post('http://localhost:5000/withdrawals', {
+    console.log("Sending withdrawal request for item:", itemId, "quantity:", quantity, "totalPrice:", totalPrice);
+
+    try {
+      const userId = 'student18691';  // This should be dynamically set after login
+
+      const response = await axios.post('http://localhost:5000/transactions', {
         user_id: userId,
         item_id: itemId,
         quantity: quantity,
+        total_price: totalPrice,  // Ensure total_price is passed to the backend
       });
+
+      console.log("Response from backend:", response.data);
 
       // After withdrawal, refetch the inventory to update quantities
       fetchInventory();
-      alert("Withdrawal successful!");
+
+      // Set success message with the transaction total amount
+      setSuccessMessage(`Transaction successful! Total: $${response.data.total_amount}`);
     } catch (err) {
       console.error("Error processing withdrawal:", err.message);
+      setSuccessMessage('Error processing withdrawal.');  // Show error message
     }
   };
 
   const deleteItem = async (id) => {
     try {
       const response = await axios.delete(`http://localhost:5000/inventory/delete/${id}`);
-      alert(response.data.message);  // Alert with the returned message
-      fetchInventory();  // Re-fetch the inventory to update the list
+      alert(response.data.message);
+      fetchInventory();
     } catch (err) {
       console.error("Error deleting item:", err.message);
       alert("Error deleting item. Make sure the item is fully withdrawn.");
@@ -82,7 +92,7 @@ function InventoryList({ role }) {
         stock_quantity: updatedQuantities[id]
       });
       alert("Quantity Updated!");
-      fetchInventory(); // Refetch inventory after update
+      fetchInventory();
     } catch (err) {
       console.error("Error updating quantity:", err.message);
     }
@@ -92,6 +102,9 @@ function InventoryList({ role }) {
     <div className="container mt-4">
       <h2 className="text-dark border-bottom pb-2 mb-4">📦 Inventory Items</h2>
 
+      {/* Display success or error message */}
+      {successMessage && <div className="alert alert-success">{successMessage}</div>}
+
       {/* Main Inventory Table */}
       <table className="table table-striped table-bordered">
         <thead className="table-dark">
@@ -100,6 +113,7 @@ function InventoryList({ role }) {
             <th>Quantity</th>
             <th>Category</th>
             <th>Supplier</th>
+            <th>Price</th> {/* Moved Price column */}
             <th>Actions</th>
           </tr>
         </thead>
@@ -118,13 +132,11 @@ function InventoryList({ role }) {
                   value={updatedQuantities[item.item_id] || ''}
                   onChange={(e) => handleQuantityChange(item.item_id, e.target.value)}
                 />
-                {/* Show Update button for admins */}
                 {role === 'admin' && (
                   <button className="umbc-btn mt-1" onClick={() => updateQuantity(item.item_id)}>
                     Update
                   </button>
                 )}
-                {/* Show Withdraw button for students */}
                 {role === 'student' && (
                   <button className="umbc-btn mt-1" onClick={() => handleWithdrawal(item.item_id, updatedQuantities[item.item_id])}>
                     Withdraw
@@ -133,6 +145,9 @@ function InventoryList({ role }) {
               </td>
               <td>{item.category}</td>
               <td>{item.supplier}</td>
+              <td>{item.price !== null && item.price !== undefined
+                ? `$${parseFloat(item.price).toFixed(2)}`
+                : 'Price not available'}</td>
               <td>
                 <button className="umbc-btn" onClick={() => deleteItem(item.item_id)}>
                   Delete
@@ -152,6 +167,7 @@ function InventoryList({ role }) {
             <th>Quantity</th>
             <th>Category</th>
             <th>Supplier</th>
+            <th>Price</th> {/* Moved Price column */}
           </tr>
         </thead>
         <tbody>
@@ -160,9 +176,12 @@ function InventoryList({ role }) {
             .map(item => (
               <tr key={item.item_id}>
                 <td>{item.item_name}</td>
-                <td className="low-stock">{item.stock_quantity}</td>
+                <td>{item.stock_quantity}</td>
                 <td>{item.category}</td>
                 <td>{item.supplier}</td>
+                <td>{item.price !== null && item.price !== undefined
+                  ? `$${parseFloat(item.price).toFixed(2)}`
+                  : 'Price not available'}</td>
               </tr>
             ))}
         </tbody>

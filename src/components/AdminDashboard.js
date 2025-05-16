@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 function AdminDashboard() {
-  const [popularItems, setPopularItems] = useState([]); // Start with an empty array
-  const [peakHours, setPeakHours] = useState([]); // Start with an empty array
-  const [peakDays, setPeakDays] = useState([]); // Start with an empty array
-  const [loading, setLoading] = useState(true); // Loading state to show loading indicator
+  const [popularItems, setPopularItems] = useState([]); // Popular items
+  const [peakHours, setPeakHours] = useState([]); // Peak hours
+  const [peakDays, setPeakDays] = useState([]); // Peak days
+  const [loading, setLoading] = useState(true); // Loading state
+  const [transactionHistory, setTransactionHistory] = useState([]); // Transaction history
 
   // Function to update or add a popular item based on withdrawal count
   const updateItemPopularity = async (item_name, withdrawal_count) => {
@@ -31,35 +32,44 @@ function AdminDashboard() {
     }
   };
 
+  // Fetch peak hours data from the backend
+  const fetchPeakHours = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/admin/peak-hours?timestamp=${new Date().getTime()}`);
+      setPeakHours(response.data);
+    } catch (err) {
+      console.error('Error fetching peak hours data:', err.message);
+    }
+  };
+
+  // Fetch peak days data from the backend
+  const fetchPeakDays = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/admin/peak-days?timestamp=${new Date().getTime()}`);
+      setPeakDays(response.data);
+    } catch (err) {
+      console.error('Error fetching peak days data:', err.message);
+    }
+  };
+
+  // Fetch withdrawal transaction history from the backend
+  const fetchTransactionHistory = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/admin/transaction-history');
+      setTransactionHistory(response.data);
+    } catch (err) {
+      console.error('Error fetching transaction history:', err.message);
+    }
+  };
+
   useEffect(() => {
-    // Fetch peak hours data from the backend
-    const fetchPeakHours = async () => {
-      try {
-        const response = await axios.get(`http://localhost:5000/admin/peak-hours?timestamp=${new Date().getTime()}`);
-        setPeakHours(response.data);
-      } catch (err) {
-        console.error('Error fetching peak hours data:', err.message);
-      }
-    };
-
-    // Fetch peak days data from the backend
-    const fetchPeakDays = async () => {
-      try {
-        const response = await axios.get(`http://localhost:5000/admin/peak-days?timestamp=${new Date().getTime()}`);
-        setPeakDays(response.data);
-      } catch (err) {
-        console.error('Error fetching peak days data:', err.message);
-      }
-    };
-
     // Wait for all fetch requests to complete
-    Promise.all([fetchPopularItems(), fetchPeakHours(), fetchPeakDays()])
+    Promise.all([fetchPopularItems(), fetchPeakHours(), fetchPeakDays(), fetchTransactionHistory()])
       .then(() => setLoading(false))
       .catch(err => {
         console.error('Error fetching data:', err.message);
         setLoading(false); // Even if an error occurs, set loading to false
       });
-
   }, []); // Empty dependency array means this will run once on page load
 
   if (loading) {
@@ -140,7 +150,36 @@ function AdminDashboard() {
         </table>
       )}
 
-    
+      {/* Transaction History */}
+      <h4>Transaction History</h4>
+      {transactionHistory.length === 0 ? (
+        <p>No transaction history available.</p>
+      ) : (
+        <table className="table table-striped">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Item Name</th>
+              <th>Quantity</th>
+              <th>Price</th>
+              <th>Total Price</th>
+              <th>Transaction Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactionHistory.map((transaction, index) => (
+              <tr key={index}>
+                <td>{transaction.user_id}</td>
+                <td>{transaction.item_name}</td>
+                <td>{transaction.quantity}</td>
+                <td>{parseFloat(transaction.price).toFixed(2)}</td>
+                <td>{(transaction.quantity * transaction.price).toFixed(2)}</td>
+                <td>{new Date(transaction.withdrawal_timestamp).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       {/* Export Buttons */}
       <div className="download-buttons mt-4">
