@@ -132,7 +132,27 @@ router.get('/peak-days', async (req, res) => {
   }
 });
 
-
+// GET - Retrieve transaction history for withdrawals
+router.get('/transaction-history', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+        w.user_id, 
+        i.item_name, 
+        w.quantity, 
+        i.price, 
+        (w.quantity * i.price) AS total_price, 
+        w.withdrawal_timestamp
+       FROM withdrawals w
+       JOIN inventory i ON w.item_id = i.item_id
+       ORDER BY w.withdrawal_timestamp DESC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching transaction history:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;
 

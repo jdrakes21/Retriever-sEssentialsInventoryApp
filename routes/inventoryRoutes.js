@@ -30,42 +30,36 @@ router.get('/available', async (req, res) => {
 });
 
 
+// POST - Add an item to inventory
 router.post('/add', async (req, res) => {
-  const { item_name, stock_quantity, category, supplier } = req.body;
+  const { item_name, stock_quantity, category, supplier, price } = req.body;
 
-  // Step 1: Log incoming data for debugging
-  console.log("Received request to add item:", req.body);
+  // Validate price
+  if (isNaN(price) || price <= 0) {
+    return res.status(400).json({ error: 'Please enter a valid price.' });
+  }
 
   try {
-    // Step 2: Check if the item with the same name and supplier already exists
     const existingItem = await pool.query(
       `SELECT * FROM inventory WHERE item_name ILIKE $1 AND supplier ILIKE $2`,
       [item_name, supplier]
     );
-    console.log("Existing item check result:", existingItem.rows);
 
     if (existingItem.rows.length > 0) {
-      // If the item exists, update the stock quantity
       const updatedItem = await pool.query(
-        `UPDATE inventory
-         SET stock_quantity = stock_quantity + $1
-         WHERE item_id = $2
-         RETURNING *`,
+        `UPDATE inventory SET stock_quantity = stock_quantity + $1 
+         WHERE item_id = $2 RETURNING *`,
         [stock_quantity, existingItem.rows[0].item_id]
       );
-      console.log("Updated item result:", updatedItem.rows[0]);
       return res.json({ message: 'Item quantity updated', item: updatedItem.rows[0] });
     }
 
-    // Step 3: If the item does not exist, create a new item
     const newItem = await pool.query(
-      `INSERT INTO inventory (item_name, stock_quantity, category, supplier) 
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [item_name, stock_quantity, category, supplier]
+      `INSERT INTO inventory (item_name, stock_quantity, category, supplier, price) 
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [item_name, stock_quantity, category, supplier, price]
     );
-    console.log("New item added:", newItem.rows[0]);
     res.json({ message: 'Item added successfully', item: newItem.rows[0] });
-
   } catch (err) {
     console.error("Error details:", err);
     res.status(500).json({ error: err.message });
